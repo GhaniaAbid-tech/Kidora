@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Challenge Lab — KIDORA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="lab">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<div class="page-head"><div class="kicker">◇ Challenge Lab</div><h1>Play games. Train your brain.</h1><p>Four quick games that make you faster, sharper and smarter. Every game you finish earns XP.</p></div>
+
+<div class="tabs" id="tabs">
+  <button class="tab on" data-g="mystery">🔢 Number Mystery</button>
+  <button class="tab" data-g="speed">⚡ Speed Math</button>
+  <button class="tab" data-g="memory">🃏 Memory Match</button>
+  <button class="tab" data-g="riddle">🧩 Riddle Rush</button>
+</div>
+
+<!-- Number mystery -->
+<section class="game on" id="g-mystery"><div class="game-card">
+  <h2>🔢 Number Mystery</h2><p>I'm thinking of a secret number from 1 to 50. Use the hot and cold clues to find it. Fewer guesses means more XP!</p>
+  <div class="scorebar"><div>Guesses<b id="mTries">0</b></div><div>Best XP<b id="mXP">80</b></div></div>
+  <div class="row"><input class="input" id="mIn" type="number" min="1" max="50" placeholder="1-50"><button class="btn" id="mBtn">Guess!</button><button class="btn ghost" id="mNew">New number</button></div>
+  <div class="log" id="mLog"></div><div class="result" id="mRes"></div>
+</div></section>
+
+<!-- Speed math -->
+<section class="game" id="g-speed"><div class="game-card">
+  <h2>⚡ Speed Math</h2><p>Solve as many sums as you can in 30 seconds. Type the answer and press Enter. Score 10+ for a badge!</p>
+  <div class="scorebar"><div>Score<b id="sScore">0</b></div><div>Time<b id="sTime">30</b></div><div>Your best<b id="sBest">0</b></div></div>
+  <div class="timer"><i id="sBar"></i></div>
+  <div class="big-q" id="sQ">Ready?</div>
+  <div class="row" style="justify-content:center"><input class="input" id="sIn" type="number" disabled placeholder="?"><button class="btn lime" id="sGo">Start</button></div>
+  <div class="result" id="sRes"></div>
+</div></section>
+
+<!-- Memory -->
+<section class="game" id="g-memory"><div class="game-card">
+  <h2>🃏 Memory Match</h2><p>Flip two cards at a time and find all 8 matching pairs. Use as few moves as you can!</p>
+  <div class="scorebar"><div>Moves<b id="memMoves">0</b></div><div>Pairs<b id="memPairs">0/8</b></div></div>
+  <div class="mem" id="mem"></div><div class="row" style="margin-top:16px"><button class="btn ghost" id="memNew">Shuffle again</button></div>
+  <div class="result" id="memRes"></div>
+</div></section>
+
+<!-- Riddles -->
+<section class="game" id="g-riddle"><div class="game-card">
+  <h2>🧩 Riddle Rush</h2><p>Five riddles. Pick the right answer to each one. Each correct answer is worth 15 XP.</p>
+  <div class="scorebar"><div>Question<b id="rN">1/5</b></div><div>Correct<b id="rScore">0</b></div></div>
+  <div id="rBox"></div><div class="result" id="rRes"></div>
+</div></section>
+
+</main>
+</div>
+</div>
+<script src="shared.js"></script>
+<script>
+/* tabs */
+function show(g){
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.g===g));
+  $$('.game').forEach(s=>s.classList.toggle('on',s.id==='g-'+g));
+  history.replaceState(null,'','#'+g);
+}
+$$('.tab').forEach(t=>t.onclick=()=>show(t.dataset.g));
+
+/* ---------- Number Mystery ---------- */
+let secret,tries,mDone;
+function newMystery(){secret=1+rand(50);tries=0;mDone=false;$('#mTries').textContent=0;$('#mXP').textContent=80;$('#mLog').innerHTML='';$('#mRes').classList.remove('show');$('#mIn').value='';$('#mIn').disabled=false;$('#mBtn').disabled=false;$('#mIn').focus()}
+function guess(){
+  if(mDone)return;
+  const v=+$('#mIn').value;
+  if(!v||v<1||v>50){toast('Pick a number from 1 to 50');return}
+  tries++;$('#mTries').textContent=tries;$('#mXP').textContent=Math.max(20,90-tries*10);
+  const d=Math.abs(v-secret);
+  if(d===0){
+    mDone=true;const xp=Math.max(20,90-tries*10);S.games++;save();
+    $('#mLog').insertAdjacentHTML('afterbegin',`<div>🎯 ${v}: You got it!</div>`);
+    $('#mRes').textContent=`🎉 Solved in ${tries} guess${tries>1?'es':''}! +${xp} XP`;$('#mRes').classList.add('show');
+    $('#mIn').disabled=true;$('#mBtn').disabled=true;confetti();addXP(xp,'Number Mystery');
+  }else{
+    const t=d<=3?'🔥 Burning hot':d<=8?'♨️ Warm':d<=16?'🌤️ Cool':'🧊 Freezing';
+    $('#mLog').insertAdjacentHTML('afterbegin',`<div>${v}: ${t}, go ${v<secret?'⬆ higher':'⬇ lower'}</div>`);
+    beep('bad');
+  }
+  $('#mIn').value='';$('#mIn').focus();
+}
+$('#mBtn').onclick=guess;$('#mNew').onclick=newMystery;$('#mIn').onkeydown=e=>{if(e.key==='Enter')guess()};
+
+/* ---------- Speed Math ---------- */
+let sScore,sLeft,sTimer,sAns,sRun=false;
+$('#sBest').textContent=S.speedBest;
+function nextQ(){
+  let a=1+rand(12),b=1+rand(12);const op=['+','−','×'][rand(3)];
+  if(op==='×'){a=2+rand(9);b=2+rand(9)}
+  if(op==='−'&&b>a)[a,b]=[b,a];
+  sAns=op==='+'?a+b:op==='−'?a-b:a*b;$('#sQ').textContent=`${a} ${op} ${b}`;
+}
+function startSpeed(){
+  sScore=0;sLeft=30;sRun=true;$('#sScore').textContent=0;$('#sTime').textContent=30;$('#sRes').classList.remove('show');
+  $('#sBar').style.transition='none';$('#sBar').style.width='100%';setTimeout(()=>{$('#sBar').style.transition='width 30s linear';$('#sBar').style.width='0%'},30);
+  $('#sIn').disabled=false;$('#sIn').value='';$('#sIn').focus();$('#sGo').disabled=true;nextQ();
+  clearInterval(sTimer);sTimer=setInterval(()=>{sLeft--;$('#sTime').textContent=sLeft;if(sLeft<=0)endSpeed()},1000);
+}
+function endSpeed(){
+  clearInterval(sTimer);sRun=false;$('#sIn').disabled=true;$('#sGo').disabled=false;$('#sGo').textContent='Play again';$('#sQ').textContent='Time!';
+  const xp=Math.max(5,sScore*5);S.games++;if(sScore>S.speedBest){S.speedBest=sScore;$('#sBest').textContent=sScore}save();
+  $('#sRes').textContent=`⏱️ You solved ${sScore} sums! +${xp} XP`;$('#sRes').classList.add('show');
+  if(sScore>=10)confetti();addXP(xp,'Speed Math');
+}
+$('#sGo').onclick=startSpeed;
+$('#sIn').onkeydown=e=>{
+  if(e.key!=='Enter'||!sRun||$('#sIn').value==='')return;
+  if(+$('#sIn').value===sAns){sScore++;$('#sScore').textContent=sScore;nextQ();beep('ok')}else{beep('bad')}
+  $('#sIn').value='';
+};
+
+/* ---------- Memory Match ---------- */
+const EM=['🦊','🐼','🦄','🐙','🚀','🌈','🍕','⚡'];
+let first=null,lock=false,moves,pairs;
+function newMemory(){
+  moves=0;pairs=0;first=null;lock=false;$('#memMoves').textContent=0;$('#memPairs').textContent='0/8';$('#memRes').classList.remove('show');
+  $('#mem').innerHTML=shuffle([...EM,...EM]).map((e,i)=>`<button class="mcard" data-e="${e}" aria-label="card ${i+1}">${e}</button>`).join('');
+  $$('.mcard').forEach(c=>c.onclick=()=>flip(c));
+}
+function flip(c){
+  if(lock||c.classList.contains('up')||c.classList.contains('ok'))return;
+  c.classList.add('up');
+  if(!first){first=c;return}
+  moves++;$('#memMoves').textContent=moves;
+  if(first.dataset.e===c.dataset.e){
+    first.classList.replace('up','ok');c.classList.replace('up','ok');first=null;pairs++;$('#memPairs').textContent=pairs+'/8';beep('ok');
+    if(pairs===8){
+      const xp=Math.max(30,100-moves*3);S.memWins++;S.games++;save();
+      $('#memRes').textContent=`🎉 All pairs found in ${moves} moves! +${xp} XP`;$('#memRes').classList.add('show');confetti();addXP(xp,'Memory Match');
+    }
+  }else{
+    lock=true;const a=first;first=null;
+    setTimeout(()=>{a.classList.remove('up');c.classList.remove('up');lock=false},800);
+  }
+}
+$('#memNew').onclick=newMemory;
+
+/* ---------- Riddle Rush ---------- */
+const RID=[
+ ['I have hands but cannot clap. What am I?','A clock',['A cat','A robot']],
+ ['What has keys but cannot open any lock?','A piano',['A door','A wall']],
+ ['The more you take, the more you leave behind. What am I?','Footsteps',['Cookies','Water']],
+ ['What gets wetter the more it dries?','A towel',['A sponge','The rain']],
+ ["I'm tall when I'm young and short when I'm old. What am I?",'A candle',['A tree','A pencil']],
+ ['What can you catch but never throw?','A cold',['A ball','A fish']],
+ ['What goes up but never comes down?','Your age',['A balloon','The rain']],
+ ['What has many teeth but never bites?','A comb',['A shark','A robot']]
+];
+let rq,ri,rs;
+function startRiddles(){rq=shuffle(RID).slice(0,5);ri=0;rs=0;$('#rRes').classList.remove('show');$('#rScore').textContent=0;drawRiddle()}
+function drawRiddle(){
+  if(ri>=5){
+    const xp=Math.max(5,rs*15);S.games++;save();
+    $('#rBox').innerHTML=`<div class="big-q" style="font-size:34px">You got ${rs} of 5! 🧠</div><div class="row" style="justify-content:center"><button class="btn lime" onclick="startRiddles()">Play again</button></div>`;
+    $('#rRes').textContent=`+${xp} XP earned`;$('#rRes').classList.add('show');if(rs>=4)confetti();addXP(xp,'Riddle Rush');return;
+  }
+  const [q,a,w]=rq[ri];$('#rN').textContent=(ri+1)+'/5';
+  $('#rBox').innerHTML=`<h3 style="font:800 21px Nunito,system-ui,sans-serif;line-height:1.4">${q}</h3>`+shuffle([a,...w]).map(o=>`<button class="opt" data-ok="${o===a}">${o}</button>`).join('');
+  $$('#rBox .opt').forEach(b=>b.onclick=()=>{
+    const ok=b.dataset.ok==='true';b.classList.add(ok?'good':'bad');
+    if(ok){rs++;$('#rScore').textContent=rs;beep('ok')}else{beep('bad');$$('#rBox .opt').find(x=>x.dataset.ok==='true').classList.add('good')}
+    $$('#rBox .opt').forEach(x=>x.onclick=null);setTimeout(()=>{ri++;drawRiddle()},1100);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const h=location.hash.slice(1);if(['mystery','speed','memory','riddle'].includes(h))show(h);
+  newMystery();newMemory();startRiddles();
+});
+</script>
+</body>
+</html>

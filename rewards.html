@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rewards — KIDORA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="rewards">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<div class="page-head"><div class="kicker">♢ Rewards</div><h1>Your trophy room.</h1><p>Earn XP, level up, collect badges and unlock new avatars. Don't forget your daily spin!</p></div>
+
+<div class="level-card">
+  <div class="level-ring" id="ring"><span id="ringE">🌱</span></div>
+  <div style="flex:1;min-width:220px"><h2 id="lvName"></h2><p id="lvTxt"></p><div class="mini-bar" style="height:10px"><i id="lvBar" style="width:0"></i></div></div>
+</div>
+
+<div class="layout">
+  <section class="panel">
+    <div class="panel-head"><h2>🎡 Daily spin</h2><span class="xp" id="spinNote"></span></div>
+    <div class="wheel-wrap"><div class="pointer">▼</div><canvas id="wheel" width="400" height="400"></canvas></div>
+    <div style="text-align:center;margin-top:14px"><button class="btn lime" id="spin">Spin the wheel!</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>🔥 Streak calendar</h2><span class="xp" id="streakNote"></span></div>
+    <div class="cal" id="cal"></div>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:0">Learn a little every day to keep the flame alive. Each lit square is a day you showed up!</p>
+  </section>
+
+  <section class="panel span-all">
+    <div class="panel-head"><h2>🏅 Badge collection</h2><span class="xp" id="bCount"></span></div>
+    <div class="bgrid" id="badges"></div>
+  </section>
+
+  <section class="panel span-all">
+    <div class="panel-head"><h2>🎭 Avatar unlocks</h2><span style="color:var(--muted);font-size:12px">Reach new levels to unlock more</span></div>
+    <div class="av-grid" id="avs"></div>
+  </section>
+</div>
+
+</main>
+</div>
+</div>
+<script src="shared.js"></script>
+<script>
+const SEG=[10,25,15,50,20,100,30,40],COL=['#7557ff','#ff5c8a','#4fd6d0','#ffd866','#a995ff','#c8f45b','#ff9db8','#8fe5e0'];
+const ICON=['🌱','🧭','🧗','🏔️','👑'];
+function drawWheel(){
+  const c=$('#wheel'),x=c.getContext('2d'),R=200,a=Math.PI*2/SEG.length;
+  SEG.forEach((v,i)=>{
+    x.beginPath();x.moveTo(R,R);x.arc(R,R,R-4,-Math.PI/2+i*a,-Math.PI/2+(i+1)*a);x.fillStyle=COL[i];x.fill();x.strokeStyle='#fff';x.lineWidth=4;x.stroke();
+    x.save();x.translate(R,R);x.rotate(-Math.PI/2+i*a+a/2);x.fillStyle=i===5||i===3?'#151820':'#fff';x.font='900 34px Nunito, sans-serif';x.textAlign='right';x.fillText(v,R-30,12);x.restore();
+  });
+  x.beginPath();x.arc(R,R,28,0,7);x.fillStyle='#111426';x.fill();
+  x.fillStyle='#fff';x.font='28px sans-serif';x.textAlign='center';x.fillText('✦',R,R+10);
+}
+let rot=0;
+function spinState(){
+  const used=S.lastSpin===ds();
+  $('#spin').disabled=used;$('#spin').textContent=used?'Come back tomorrow! 🌙':'Spin the wheel!';
+  $('#spinNote').textContent=used?'Used today':'1 free spin';
+}
+$('#spin').onclick=()=>{
+  if(S.lastSpin===ds())return;
+  S.lastSpin=ds();save();$('#spin').disabled=true;
+  const i=rand(SEG.length),seg=360/SEG.length,center=i*seg+seg/2;
+  rot+=360*5+((360-center)-(rot%360)+360)%360;
+  $('#wheel').style.transform=`rotate(${rot}deg)`;
+  setTimeout(()=>{
+    S.spins++;save();confetti(SEG[i]>=50?170:90);
+    addXP(SEG[i],'Daily spin',false);spinState();
+  },4300);
+};
+function render(){
+  const li=levelInfo(S.xp);
+  $('#ring').style.setProperty('--p',li.pct);$('#ringE').textContent=ICON[li.i];
+  $('#lvName').textContent=`Level ${li.i+1} · ${li.name}`;
+  $('#lvTxt').textContent=li.next?`${fmt(S.xp)} XP · ${fmt(li.toNext)} XP to become a ${li.next}`:`${fmt(S.xp)} XP · You reached the top level!`;
+  $('#lvBar').style.width=li.pct+'%';
+  /* badges */
+  $('#bCount').textContent=S.seen.length+' / '+BADGES.length;
+  $('#badges').innerHTML=BADGES.map(b=>{const on=S.seen.includes(b.id);return`<div class="bcard ${on?'':'locked'}"><span class="bi">${b.icon}</span><b>${b.name}</b><small>${on?'Unlocked ✓':b.desc}</small></div>`}).join('');
+  /* calendar */
+  $('#streakNote').textContent=S.streak+' day streak';
+  let h='';for(let i=27;i>=0;i--){const d=new Date(Date.now()-i*864e5);h+=`<i class="${i<S.streak?'lit':''} ${i===0?'today':''}">${d.getDate()}</i>`}
+  $('#cal').innerHTML=h;
+  /* avatars */
+  $('#avs').innerHTML=AVATARS.map(([e,min])=>{const ok=S.xp>=min;return`<button class="av ${S.avatar===e?'on':''} ${ok?'':'lock'}" data-e="${e}" data-ok="${ok}" title="${ok?'Equip':'Unlocks at '+fmt(min)+' XP'}">${e}</button>`}).join('');
+  $$('.av').forEach(b=>b.onclick=()=>{
+    if(b.dataset.ok!=='true'){toast('🔒 Unlocks at '+fmt(AVATARS.find(a=>a[0]===b.dataset.e)[1])+' XP');return}
+    S.avatar=b.dataset.e;save();refreshChrome();render();toast('Avatar equipped!');
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>{drawWheel();spinState();render()});
+document.addEventListener('kidora:update',render);
+</script>
+</body>
+</html>

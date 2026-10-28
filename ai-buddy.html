@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Buddy — KIDORA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="buddy">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<div class="page-head"><div class="kicker">✦ AI Buddy</div><h1>Ask me anything. I love questions!</h1><p>Your learning buddy explains big ideas in simple, fun ways. Tap a question or type your own.</p></div>
+
+<div class="buddy-wrap">
+  <section class="chat">
+    <div class="chat-top"><div class="face2">🤖</div><div><b>Buddy</b><small>● Online and curious</small></div></div>
+    <div class="msgs" id="msgs"></div>
+    <form class="chat-in" id="form"><input id="inp" placeholder="Type your question..." autocomplete="off"><button class="btn" type="submit">Send</button></form>
+  </section>
+
+  <aside style="display:grid;gap:16px">
+    <div class="panel"><div class="panel-head"><h2>Try asking</h2></div><div class="chips" id="sugg"></div></div>
+    <div class="panel"><div class="panel-head"><h2>Buddy's tips</h2></div>
+      <p style="color:var(--muted);line-height:1.7;margin:0;font-size:14px">🔎 Ask “why” and “how” questions.<br>🎲 Say “tell me a joke” for a laugh.<br>🧮 Ask about math tricks, space, animals, plants and more!<br>✦ The first 20 questions each earn +5 XP.<br>🔒 Never share your real name, address or passwords with anyone online.</p></div>
+  </aside>
+</div>
+
+</main>
+</div>
+</div>
+<script src="shared.js"></script>
+<script>
+const KB=[
+ {k:['sky blue','why is the sky blue','blue sky'],a:'Sunlight looks white but is really every color mixed together. When it hits the air, the small blue waves bounce around the most, so blue light reaches your eyes from every direction. That is why the sky looks blue! 🌤️'},
+ {k:['ice float','ice floating','does ice float'],a:'Water is weird! When it freezes, its molecules spread into a pattern with little gaps. That makes ice lighter than liquid water, so it floats. Good thing too, or lakes would freeze from the bottom up! 🧊'},
+ {k:['rainbow','rainbows'],a:'A rainbow happens when sunlight passes through raindrops. Each drop bends the light and splits it into red, orange, yellow, green, blue and purple. You need sun behind you and rain in front of you! 🌈'},
+ {k:['sleep','sleepy','dream','dreams'],a:'Sleep is when your brain tidies up! It saves what you learned today, and your body grows and repairs itself. Kids your age need about 9 to 11 hours every night. 😴'},
+ {k:['volcano','volcanoes','lava'],a:'Deep inside Earth it is so hot that rock melts into magma. When pressure builds up, the magma shoots out of a crack in the ground. Once it is outside we call it lava! 🌋'},
+ {k:['moon'],a:'The Moon is Earth\'s space neighbor, about 384,000 km away. It does not make its own light. It shines because it bounces sunlight back to us. 🌙'},
+ {k:['dinosaur','dinosaurs','t rex'],a:'Dinosaurs ruled Earth for about 165 million years! Most disappeared about 66 million years ago, but their cousins are still around. Birds are living dinosaurs! 🦖'},
+ {k:['plant','plants','photosynthesis'],a:'Plants make their own food using sunlight, water and carbon dioxide. This is called photosynthesis. As a bonus, they give out the oxygen we breathe! 🌱'},
+ {k:['gravity','fall down'],a:'Gravity is an invisible pull between things. Earth is so big that it pulls everything toward its center, and that is what keeps your feet on the ground. The Moon has less gravity, so you could jump much higher there! 🍎'},
+ {k:['star','stars','twinkle'],a:'Stars are giant balls of burning gas, just like our Sun, but very far away. They seem to twinkle because their light wiggles as it travels through our moving air. ⭐'},
+ {k:['ocean salty','sea salty','salty'],a:'Rain washes tiny bits of salt from rocks into rivers, and rivers carry them to the sea. When ocean water evaporates, the salt stays behind. After millions of years, the sea became salty! 🌊'},
+ {k:['thunder','lightning'],a:'Lightning is a giant spark of electricity in the clouds. It heats the air so fast that the air booms, and that boom is thunder! Light travels faster than sound, so you see the flash first. ⚡'},
+ {k:['black hole','black holes'],a:'A black hole is a place in space where gravity is so strong that nothing, not even light, can escape. They form when a very big star collapses. Spooky but amazing! 🕳️'},
+ {k:['times table','multiply','multiplication','math trick'],a:'Here is a trick for 9 × anything up to 10: hold up 10 fingers and fold down the finger you are multiplying by. Fingers on the left are the tens, fingers on the right are the ones. For 9 × 4 you get 3 and 6, which is 36! 🧮'},
+ {k:['joke','funny','laugh'],a:null,joke:true},
+ {k:['hello','hi','hey','good morning'],a:'Hello, explorer! 👋 I am Buddy. Ask me about space, animals, science, math, anything you are curious about!'},
+ {k:['thanks','thank you'],a:'You are welcome! Curious minds make the world better. Got another question? 😊'},
+ {k:['who are you','your name'],a:'I am Buddy, your KIDORA learning buddy! I am a robot who loves questions almost as much as you do. 🤖'}
+];
+const JOKES=['Why did the math book look so sad? Because it had too many problems! 📘','What do you call a sleeping dinosaur? A dino-snore! 🦕','Why did the sun go to school? To get a little brighter! ☀️','What do planets like to read? Comet books! ☄️','Why was the computer cold? It left its Windows open! 💻'];
+const FALL=['Ooh, great question! I don\'t know that one yet, but try asking me about space, animals, plants, weather or math tricks. 🔎','Hmm, my robot brain is still learning about that! Ask your teacher or a grown-up, then come tell me what you find out! 🤔'];
+const SUG=['Why is the sky blue?','Why does ice float?','How do rainbows form?','Tell me about black holes','Tell me a joke','Show me a math trick','Why is the ocean salty?','Are birds dinosaurs?'];
+
+const msgs=$('#msgs');
+function add(t,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
+/* Local fallback: used only when the KIDORA server / AI is not reachable */
+function localReply(q){
+  const t=' '+q.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ')+' ';
+  const hit=KB.find(e=>e.k.some(k=>t.includes(' '+k+' ')||(k.includes(' ')&&t.includes(k))));
+  if(!hit)return null;
+  return hit.joke?JOKES[rand(JOKES.length)]:hit.a;
+}
+const OFFLINE='My big AI brain is switched off right now, so I only know a few topics (sky, ice, rainbows, space, plants, jokes...). Ask a grown-up to start the KIDORA server so I can answer anything! 🤖';
+const API=location.protocol==='file:'?'http://localhost:3000/api/chat':'/api/chat';
+let hist=[],busy=false;
+async function getReply(q){
+  hist.push({role:'user',content:q});
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-8)})});
+    const d=await r.json();
+    if(!r.ok||!d.reply)throw new Error(d.error||'bad reply');
+    hist.push({role:'assistant',content:d.reply});
+    return d.reply;
+  }catch(e){
+    const l=localReply(q)||OFFLINE;
+    hist.push({role:'assistant',content:l});
+    return l;
+  }
+}
+async function ask(q){
+  q=q.trim();if(!q||busy)return;
+  busy=true;add(q,'me');$('#inp').value='';
+  const typing=document.createElement('div');typing.className='msg bot typing';typing.innerHTML='<i></i><i></i><i></i>';msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
+  const [ans]=await Promise.all([getReply(q),new Promise(r=>setTimeout(r,600))]);
+  typing.remove();const d=add('','bot');const w=ans.split(' ');let i=0;
+  const iv=setInterval(()=>{d.textContent=w.slice(0,++i).join(' ');msgs.scrollTop=msgs.scrollHeight;if(i>=w.length){clearInterval(iv);busy=false}},30);
+  S.chats++;save();
+  if(S.chats<=20)addXP(5,'Asked Buddy',false);else checkBadges();
+}
+$('#form').onsubmit=e=>{e.preventDefault();ask($('#inp').value)};
+document.addEventListener('DOMContentLoaded',()=>{
+  add(`Hi ${S.name}! 👋 I'm Buddy. What are you curious about today?`,'bot');
+  $('#sugg').innerHTML=SUG.map(s=>`<button class="chip">${s}</button>`).join('');
+  $$('#sugg .chip').forEach(c=>c.onclick=()=>ask(c.textContent));
+  $('#inp').focus();
+});
+</script>
+</body>
+</html>

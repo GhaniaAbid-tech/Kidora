@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — KIDORA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="settings">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<div class="page-head"><div class="kicker">⚙ Settings</div><h1>Make KIDORA yours.</h1><p>Pick your name, avatar and favorite color. Changes save automatically.</p></div>
+
+<div class="layout">
+  <section class="panel">
+    <div class="field"><label for="name">Your name</label><input class="text" id="name" maxlength="20" placeholder="Super Learner"></div>
+    <div class="field"><label>Avatar</label><div class="av-grid" id="avs"></div><small>Reach higher levels to unlock more avatars.</small></div>
+    <div class="field"><label>Favorite color</label><div class="swatches" id="sw"></div></div>
+    <div class="field"><label for="goal">Daily goal: <span id="goalV"></span> activities</label><input type="range" id="goal" min="1" max="6"><small>Lessons, games and Buddy chats all count.</small></div>
+    <div class="field"><label>Sound effects</label><button class="switch" id="snd" aria-label="Toggle sound"></button></div>
+  </section>
+
+  <aside style="display:grid;gap:18px;align-content:start">
+    <div class="panel"><div class="panel-head"><h2>Preview</h2></div>
+      <div class="preview"><div class="avatar" id="pAv"></div><div><b id="pName"></b><div style="color:var(--muted);font-size:13px" id="pLv"></div></div></div>
+      <p style="margin:16px 0 0"><span class="btn" style="cursor:default">Your accent color</span></p>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Start over</h2></div>
+      <p style="color:var(--muted);line-height:1.6;font-size:14px;margin-top:0">This erases your XP, badges and progress on this device.</p>
+      <button class="btn danger" id="reset">Reset my progress</button></div>
+  </aside>
+</div>
+
+</main>
+</div>
+</div>
+<script src="shared.js"></script>
+<script>
+const COLORS=['#7557ff','#ff5c8a','#18b8b0','#f08a24','#2f7df6','#16a56d'];
+function ui(){
+  const li=levelInfo(S.xp);
+  $('#name').value=S.name;$('#goal').value=S.goal;$('#goalV').textContent=S.goal;
+  $('#snd').classList.toggle('on',S.sound);
+  $('#pAv').textContent=S.avatar;$('#pName').textContent=S.name;$('#pLv').textContent=`${li.name} · ${fmt(S.xp)} XP`;
+  $('#sw').innerHTML=COLORS.map(c=>`<button class="sw ${S.accent===c?'on':''}" style="background:${c}" data-c="${c}" aria-label="${c}"></button>`).join('');
+  $$('.sw').forEach(b=>b.onclick=()=>{S.accent=b.dataset.c;save();document.documentElement.style.setProperty('--purple',S.accent);ui();toast('Color saved 🎨')});
+  $('#avs').innerHTML=AVATARS.map(([e,min])=>{const ok=S.xp>=min;return`<button class="av ${S.avatar===e?'on':''} ${ok?'':'lock'}" data-e="${e}" data-ok="${ok}">${e}</button>`}).join('');
+  $$('.av').forEach(b=>b.onclick=()=>{
+    if(b.dataset.ok!=='true'){toast('🔒 Keep earning XP to unlock this one!');return}
+    S.avatar=b.dataset.e;save();refreshChrome();ui();toast('Avatar saved ✓');
+  });
+}
+$('#name').oninput=e=>{S.name=e.target.value.trim()||'Super Learner';save();refreshChrome();$('#pName').textContent=S.name};
+$('#goal').oninput=e=>{S.goal=+e.target.value;$('#goalV').textContent=S.goal;save()};
+$('#snd').onclick=()=>{S.sound=!S.sound;save();ui();toast(S.sound?'🔊 Sound on':'🔇 Sound off');if(S.sound)beep('ok')};
+$('#reset').onclick=()=>{if(confirm('Really erase all your progress?')){localStorage.removeItem('kidora');location.reload()}};
+document.addEventListener('DOMContentLoaded',ui);
+</script>
+</body>
+</html>

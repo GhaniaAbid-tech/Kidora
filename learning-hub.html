@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Hub — KIDORA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="hub">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<div class="page-head"><div class="kicker">▣ Learning Hub</div><h1>Pick a lesson. Learn something wild.</h1><p>Short, bite-sized lessons with a quick quiz at the end. Finish them to earn XP and badges.</p></div>
+
+<div class="featured" id="featured"></div>
+
+<div class="chips" id="chips"></div>
+<div class="grid g3" id="lessons" style="margin-top:18px"></div>
+
+<h2 class="section-title">🃏 Tap to flip: mini facts</h2>
+<div class="grid g3" id="flips"></div>
+
+</main>
+</div>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<script src="shared.js"></script>
+<script>
+const SUBJ={Math:'#ece7ff',Science:'#dff9f7',Reading:'#fff1d1',Space:'#dde4ff',Nature:'#e1f9d8',Coding:'#ffe3ec',History:'#fbe8d2',Art:'#ffe0f3',Music:'#e3f1ff'};
+const L=[
+ {id:'mult9',s:'Math',i:'🧮',t:'The Magic of Multiplying by 9',m:5,xp:50,lvl:'Easy',sl:['Hold up all 10 fingers. To work out 9 × 4, fold down your 4th finger.','Count the fingers to the left of the folded one (3) and to the right (6). The answer is 36!','Try 9 × 7: fold the 7th finger. 6 fingers on the left, 3 on the right gives 63.'],q:'What is 9 × 6?',o:['45','54','56'],a:1},
+ {id:'ice',s:'Science',i:'🧊',t:'Why does ice float?',m:7,xp:70,lvl:'Curious',sl:['Most things shrink and get heavier when they get cold.','Water is weird! When it freezes, its molecules lock into a pattern with little gaps between them.','Those gaps make ice about 9% lighter than liquid water, so it floats on top.'],q:'Why does ice float on water?',o:['It is lighter (less dense) than water','It is full of tiny balloons','Because it is cold'],a:0},
+ {id:'story',s:'Reading',i:'📖',t:'Choose Your Story Ending',m:4,xp:40,lvl:'Creative',sl:['Every story has a beginning, a middle and an ending.','The ending answers the biggest question: what happens to the hero?','Writers pick a happy, surprising or open ending. Each one makes the reader feel something different.'],q:'Which ending leaves readers wondering what happens next?',o:['Happy ending','Open ending','Boring ending'],a:1},
+ {id:'daynight',s:'Space',i:'🌍',t:'Why do we have day and night?',m:6,xp:60,lvl:'Curious',sl:['Earth is a giant ball spinning like a top.','It makes one full spin about every 24 hours.','The side facing the Sun has daytime. The side turned away has night. Spin on and it flips!'],q:'What spins to give us day and night?',o:['The Sun','The Earth','The Moon'],a:1},
+ {id:'plants',s:'Nature',i:'🌱',t:'How do plants eat sunlight?',m:6,xp:60,lvl:'Easy',sl:['Plants make their own food. This is called photosynthesis.','Leaves soak up sunlight, drink water through the roots, and breathe in carbon dioxide.','They turn it into sugar to grow, and they give out oxygen for us to breathe!'],q:'Which gas do plants breathe in to make food?',o:['Carbon dioxide','Pizza','Helium'],a:0},
+ {id:'robot',s:'Coding',i:'🤖',t:'Think Like a Robot',m:8,xp:80,lvl:'Brainy',sl:['Robots follow instructions exactly, step by step. Computers too.','A list of exact steps that solves a problem is called an algorithm. A sandwich recipe is one!','A loop repeats steps: "Take a bite. Repeat until the sandwich is gone."'],q:'A list of exact steps to solve a problem is called a...',o:['Algorithm','Alphabet','Alligator'],a:0},
+ {id:'pyramid',s:'History',i:'🏺',t:'Secrets of the Pyramids',m:7,xp:70,lvl:'Curious',sl:['The Great Pyramid of Giza was built about 4,500 years ago.','It used roughly 2.3 million giant stone blocks.','For nearly 3,800 years it was the tallest human-made structure on Earth.'],q:'Who were the pyramids built for?',o:['Pharaohs','Pirates','Astronauts'],a:0},
+ {id:'colors',s:'Art',i:'🎨',t:'Mix Colors Like a Wizard',m:5,xp:50,lvl:'Creative',sl:['Red, yellow and blue are the primary colors. You can\'t make them by mixing.','Mix two primaries and you get a secondary: red + yellow = orange, red + blue = purple.','Blue + yellow = green. Add white to make any color lighter!'],q:'What do you get from blue + yellow?',o:['Green','Purple','Pink'],a:0},
+ {id:'rhythm',s:'Music',i:'🥁',t:'Rhythm and Beats',m:5,xp:50,lvl:'Easy',sl:['Music has a steady pulse, like your heartbeat. We call it the beat.','Tempo is how fast or slow the beat goes.','Clap in patterns: clap-clap-rest-clap. You just made a rhythm!'],q:'What is the steady pulse in music called?',o:['The beat','The bark','The bounce'],a:0}
+];
+const FLIPS=[['🐙','How many hearts does an octopus have?','Three! And its blood is blue.','#fff1d1'],['🌙','Do we always see the same side of the Moon?','Yes! It spins once per orbit, so one face always looks at us.','#dde4ff'],['🦈','Which is older: sharks or trees?','Sharks! They are about 450 million years old.','#dff9f7'],['🍌','Is a banana a berry?','Yes! Botanically, bananas are berries. Strawberries are not.','#ffe3ec'],['⚡','How fast is lightning?','About 360,000 km/h, much faster than any car.','#ece7ff'],['🐜','How much can an ant carry?','Up to 50 times its own body weight!','#e1f9d8']];
+
+let filter='All',query=new URLSearchParams(location.search).get('q')||'';
+const isDone=id=>S.done.includes(id);
+
+function renderFeatured(){
+  const l=L.find(x=>!isDone(x.id))||L[rand(L.length)];
+  $('#featured').innerHTML=`<div class="big">${l.i}</div><div><div class="eyebrow">✦ Lesson of the day</div><h2>${l.t}</h2><p>${l.s} · ${l.m} min · +${l.xp} XP</p><button class="btn lime" onclick="openLesson('${l.id}')">Start lesson →</button></div>`;
+}
+function renderChips(){
+  const names=['All',...Object.keys(SUBJ),'Not done'];
+  $('#chips').innerHTML=names.map(n=>`<button class="chip ${n===filter?'on':''}" data-f="${n}">${n}</button>`).join('');
+  $$('#chips .chip').forEach(c=>c.onclick=()=>{filter=c.dataset.f;renderChips();renderLessons()});
+}
+function renderLessons(){
+  const q=query.toLowerCase();
+  const list=L.filter(l=>(filter==='All'||(filter==='Not done'?!isDone(l.id):l.s===filter))&&(!q||(l.t+l.s).toLowerCase().includes(q)));
+  $('#lessons').innerHTML=list.length?list.map(l=>`<button class="lcard" onclick="openLesson('${l.id}')">${isDone(l.id)?'<span class="check">✓ Done</span>':''}<div class="ico" style="background:${SUBJ[l.s]}">${l.i}</div><h3>${l.t}</h3><div class="meta"><span class="tag">${l.s}</span><span class="tag">${l.m} min</span><span class="tag">${l.lvl}</span></div><small>+${l.xp} XP</small></button>`).join(''):`<p style="color:var(--muted)">No lessons found for "${query}". Try another word!</p>`;
+}
+function renderFlips(){
+  $('#flips').innerHTML=FLIPS.map(f=>`<div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in"><div class="face" style="background:${f[3]}"><div><span class="em">${f[0]}</span>${f[1]}</div></div><div class="face back">${f[2]}</div></div></div>`).join('');
+}
+
+/* lesson player */
+let cur,step;
+function openLesson(id){cur=L.find(l=>l.id===id);if(!cur)return;step=0;$('#modalBg').classList.add('open');drawStep()}
+function closeModal(){$('#modalBg').classList.remove('open')}
+$('#modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+function drawStep(){
+  const n=cur.sl.length,m=$('#modal');
+  const dots=`<div class="dots">${Array.from({length:n+1},(_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>`;
+  if(step<n){
+    m.innerHTML=`<button class="x" onclick="closeModal()">✕</button><span class="tag">${cur.s} · ${cur.i}</span><h2>${cur.t}</h2>${dots}<div class="slide">${cur.sl[step]}</div><div class="row-end"><small style="color:var(--muted)">Step ${step+1} of ${n}</small><button class="btn" onclick="step++;drawStep()">${step===n-1?'Take the quiz ✦':'Next →'}</button></div>`;
+  }else{
+    m.innerHTML=`<button class="x" onclick="closeModal()">✕</button><span class="tag">Quick quiz 🧠</span><h2>${cur.q}</h2>${dots}${cur.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')}<div id="qmsg" style="margin-top:6px;font-weight:700"></div>`;
+    $$('.opt',m).forEach(b=>b.onclick=()=>answer(b));
+  }
+}
+function answer(b){
+  const ok=+b.dataset.i===cur.a;
+  if(!ok){b.classList.add('bad');beep('bad');$('#qmsg').textContent='Not quite. Try again! 💪';return}
+  b.classList.add('good');$$('.opt').forEach(x=>x.onclick=null);
+  const first=!isDone(cur.id);
+  if(first){S.done.push(cur.id);save();addXP(cur.xp,cur.t)}else{beep('ok');toast('✓ Replay complete (XP only counts once)')}
+  confetti(80);
+  $('#modal').insertAdjacentHTML('beforeend',`<div class="row-end"><span style="font-weight:800;color:#0f8a57">${first?'🎉 +'+cur.xp+' XP earned!':'Nice review!'}</span><button class="btn" onclick="closeModal();renderAll()">Done</button></div>`);
+}
+function renderAll(){renderFeatured();renderLessons()}
+document.addEventListener('DOMContentLoaded',()=>{
+  renderFeatured();renderChips();renderLessons();renderFlips();
+  const h=location.hash.slice(1);if(h)openLesson(h);
+  if(query)$('.search').value=query;
+});
+</script>
+</body>
+</html>

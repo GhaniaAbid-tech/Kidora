@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KIDORA — Learn Beyond</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="overview">
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+<header class="topbar" id="topbar"></header>
+<main class="content">
+
+<section class="hero">
+  <div class="hero-text">
+    <div class="eyebrow">✦ Today's learning mission</div>
+    <h1>Curiosity is your<br><span>superpower.</span></h1>
+    <p>Build skills through tiny challenges, discover new ideas, and make learning feel like an adventure.</p>
+    <a class="btn white" href="challenge-lab.html#mystery">Start today's quest →</a>
+  </div>
+  <div class="hero-art"><div class="orbit"><div class="orb a">🧩</div><div class="orb b">🔬</div><div class="orb c">⭐</div></div><div class="bot">🤖</div></div>
+</section>
+
+<section class="stats">
+  <div class="stat"><div class="stat-top"><span>Learning streak</span><div class="stat-icon" style="background:#fff2d4">🔥</div></div><strong id="sStreak"></strong><span class="up">Keep it going!</span></div>
+  <div class="stat"><div class="stat-top"><span>Total XP</span><div class="stat-icon" style="background:#eeeaff">✦</div></div><strong id="sXP"></strong><span class="up" id="sXPd"></span></div>
+  <div class="stat"><div class="stat-top"><span>Badges earned</span><div class="stat-icon" style="background:#ddfaf7">◈</div></div><strong id="sBadge"></strong><span class="up" id="sBadgeD"></span></div>
+  <div class="stat"><div class="stat-top"><span>Level</span><div class="stat-icon" style="background:#ffe7ee">↗</div></div><strong id="sLevel"></strong><span class="up" id="sLevelD"></span></div>
+</section>
+
+<div class="layout">
+<section class="panel">
+  <div class="panel-head"><h2>Today's quests</h2><a class="view" href="learning-hub.html">View all</a></div>
+  <a class="quest" href="challenge-lab.html#mystery"><div class="qicon qi1">🧮</div><div class="quest-info"><b>Beat the Number Mystery</b><small>Math · 5 min · Easy</small></div><span class="xp">up to +80 XP</span></a>
+  <a class="quest" href="learning-hub.html#ice"><div class="qicon qi2">🔬</div><div class="quest-info"><b>Why does ice float?</b><small>Science · 7 min · Curious</small></div><span class="xp">+70 XP</span></a>
+  <a class="quest" href="learning-hub.html#story"><div class="qicon qi3">📖</div><div class="quest-info"><b>Choose your story ending</b><small>Reading · 4 min · Creative</small></div><span class="xp">+40 XP</span></a>
+  <a class="quest" href="rewards.html"><div class="qicon qi4">🎡</div><div class="quest-info"><b>Spin the daily wheel</b><small>Bonus · 1 min · Lucky</small></div><span class="xp">up to +100 XP</span></a>
+  <div class="progress-row"><div class="progress-meta"><b>Daily goal</b><span id="goalTxt"></span></div><div class="bar"><div class="fill" id="goalFill"></div></div></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Learning activity</h2><a class="view" href="rewards.html">Streak calendar →</a></div>
+  <div class="week" id="week"></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Recent achievements</h2><a class="view" href="rewards.html">See badges</a></div>
+  <div id="recent"></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>AI Buddy</h2><a class="view" href="ai-buddy.html">Ask anything →</a></div>
+  <div class="dark-card">
+    <div style="font-size:30px">🤖</div><h3>“What are you curious about?”</h3>
+    <p>Ask a question and your learning buddy will explain it in a simple, fun way.</p>
+    <a class="btn lime" href="ai-buddy.html" id="buddyLink">Talk to Buddy</a>
+  </div>
+</section>
+
+<section class="panel span-all">
+  <div class="fact"><div class="e" id="factE"></div><div><b>Fun fact of the day</b><p id="factT"></p></div></div>
+</section>
+</div>
+
+</main>
+</div>
+</div>
+<script src="shared.js"></script>
+<script>
+const FACTS=[['🐙','An octopus has three hearts and blue blood!'],['🍯','Honey never spoils. Jars found in ancient Egyptian tombs were still edible!'],['🌩️','Lightning is about five times hotter than the surface of the Sun.'],['🦒','A giraffe has the same number of neck bones as you: seven!'],['🌕','The Moon drifts away from Earth about 3.8 cm every year.'],['🐘','Elephants are one of the few animals that can recognise themselves in a mirror.'],['🌈','Every rainbow is really a full circle. We usually only see the top half!']];
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],H=[38,50,72,45,88,63,78];
+function render(){
+  const li=levelInfo(S.xp);
+  $('#sStreak').textContent=S.streak+' days';
+  $('#sXP').textContent=fmt(S.xp);$('#sXPd').textContent='+'+S.todayXP+' today';
+  $('#sBadge').textContent=S.seen.length;$('#sBadgeD').textContent='of '+BADGES.length+' to collect';
+  $('#sLevel').textContent=li.name;$('#sLevelD').textContent=li.next?li.pct+'% to '+li.next:'Max level!';
+  $('#goalTxt').textContent=Math.min(S.todayN,S.goal)+' of '+S.goal+' activities done';
+  $('#goalFill').style.width=Math.min(100,S.todayN/S.goal*100)+'%';
+  const today=(new Date().getDay()+6)%7;
+  $('#week').innerHTML=DAYS.map((d,i)=>`<div class="day ${i===today?'active':''}"><div class="column"><span style="height:${i===today?Math.min(100,25+S.todayN*25):H[i]}%"></span></div>${d}</div>`).join('');
+  const r=S.seen.slice(-3).reverse().map(id=>BADGES.find(b=>b.id===id)).filter(Boolean);
+  $('#recent').innerHTML=r.length?r.map(b=>`<div class="badge"><div class="badge-icon">${b.icon}</div><div><b>${b.name}</b><small>${b.desc}</small></div></div>`).join(''):'<p style="color:var(--muted)">Finish a lesson or game to earn your first badge!</p>';
+}
+const f=FACTS[Math.floor(Date.now()/864e5)%FACTS.length];$('#factE').textContent=f[0];$('#factT').textContent=f[1];
+document.addEventListener('DOMContentLoaded',render);document.addEventListener('kidora:update',render);
+</script>
+</body>
+</html>
